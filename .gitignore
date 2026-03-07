@@ -1,0 +1,21 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment config (may contain credentials in future stages)
+.env
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# OS noise
+.DS_Store
+Thumbs.db

@@ -46,6 +46,8 @@ class Pipeline:
 
         # Accumulated transcript entries for the session
         self._transcript_buffer: list[dict] = []
+        # Thread lock protecting _transcript_buffer from concurrent access
+        self._buffer_lock = threading.Lock()
 
     # ── Public API ───────────────────────────────────────────────
 
@@ -92,7 +94,8 @@ class Pipeline:
         primary interface Stage 2 processors will use to read the
         session transcript so far.
         """
-        return list(self._transcript_buffer)
+        with self._buffer_lock:
+            return list(self._transcript_buffer)
 
     # ── Internal ─────────────────────────────────────────────────
 
@@ -103,10 +106,6 @@ class Pipeline:
             try:
                 chunk = self._audio_queue.get(timeout=0.5)
             except queue.Empty:
-                continue
-
-            # Ignore the sentinel empty array used during shutdown
-            if chunk.shape[0] == 0:
                 continue
 
             logger.debug(
@@ -120,7 +119,8 @@ class Pipeline:
                     "text": text,
                     "timestamp": datetime.utcnow().isoformat() + "Z",
                 }
-                self._transcript_buffer.append(entry)
+                with self._buffer_lock:
+                    self._transcript_buffer.append(entry)
 
                 for cb in self._callbacks:
                     try:

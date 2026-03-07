@@ -31,12 +31,21 @@ class Transcriber:
             settings.whisper_device,
             settings.whisper_compute_type,
         )
-        self._model = WhisperModel(
-            settings.whisper_model,
-            device=settings.whisper_device,
-            compute_type=settings.whisper_compute_type,
-        )
-        logger.info("[STT] Whisper model loaded.")
+        try:
+            self._model = WhisperModel(
+                settings.whisper_model,
+                device=settings.whisper_device,
+                compute_type=settings.whisper_compute_type,
+            )
+            logger.info("[STT] Whisper model loaded.")
+        except Exception as exc:
+            logger.error(
+                "[STT] Failed to load Whisper model '%s' on device '%s': %s",
+                settings.whisper_model,
+                settings.whisper_device,
+                exc,
+            )
+            raise
 
     def transcribe(self, audio_np: np.ndarray) -> str:
         """Transcribe a float32 audio array (16 kHz, mono) to text.

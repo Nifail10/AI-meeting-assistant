@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 
 # Configure logging BEFORE any project imports so that config.log_active_config()
 # output is visible on first import.
@@ -40,7 +41,7 @@ def main() -> None:
     try:
         # Keep the main thread alive; all work happens in daemon threads
         while True:
-            pass
+            time.sleep(0.1)
     except KeyboardInterrupt:
         logger.info("Stopping…")
         pipeline.stop()
