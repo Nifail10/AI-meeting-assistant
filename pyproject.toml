@@ -1,0 +1,16 @@
+[project]
+name = "ai-meeting-assistant"
+version = "0.1.0"
+description = "Offline AI meeting assistant — real-time transcription pipeline"
+requires-python = ">=3.10"
+dependencies = [
+    "faster-whisper",
+    "sounddevice",
+    "numpy",
+    "pydantic-settings",
+    "python-dotenv",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
