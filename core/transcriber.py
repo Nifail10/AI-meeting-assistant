@@ -26,7 +26,7 @@ class Transcriber:
 
     def __init__(self) -> None:
         logger.info(
-            "Loading Whisper model  (model=%s, device=%s, compute=%s) …",
+            "[STT] Loading Whisper model  (model=%s, device=%s, compute=%s) …",
             settings.whisper_model,
             settings.whisper_device,
             settings.whisper_compute_type,
@@ -36,7 +36,7 @@ class Transcriber:
             device=settings.whisper_device,
             compute_type=settings.whisper_compute_type,
         )
-        logger.info("Whisper model loaded.")
+        logger.info("[STT] Whisper model loaded.")
 
     def transcribe(self, audio_np: np.ndarray) -> str:
         """Transcribe a float32 audio array (16 kHz, mono) to text.
@@ -52,12 +52,22 @@ class Transcriber:
             Joined segment texts, or an empty string if no speech was
             detected.
         """
-        segments, _info = self._model.transcribe(
-            audio_np,
-            beam_size=5,
-            vad_filter=True,
-            language="en",
-        )
+        try:
+            logger.debug(
+                "[STT] Transcribing chunk  shape=%s  dtype=%s",
+                audio_np.shape,
+                audio_np.dtype,
+            )
 
-        text = " ".join(seg.text.strip() for seg in segments).strip()
-        return text
+            segments, _info = self._model.transcribe(
+                audio_np,
+                beam_size=5,
+                vad_filter=True,
+                language="en",
+            )
+
+            text = " ".join(seg.text.strip() for seg in segments).strip()
+            return text
+        except Exception as exc:
+            logger.error("[STT] Transcription failed: %s", exc)
+            return ""

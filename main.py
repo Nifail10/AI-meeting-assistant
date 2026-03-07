@@ -10,27 +10,30 @@ from __future__ import annotations
 import logging
 import sys
 
-from core.pipeline import Pipeline
+# Configure logging BEFORE any project imports so that config.log_active_config()
+# output is visible on first import.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+
+logger = logging.getLogger(__name__)
+
+from core.pipeline import Pipeline  # noqa: E402
 
 
-def on_transcript(text: str) -> None:
-    """Simple callback that prints each transcript to stdout."""
-    print(f"[TRANSCRIPT] {text}")
+def on_transcript(entry: dict) -> None:
+    """Simple callback that prints each transcript entry to stdout."""
+    logger.info("[TRANSCRIPT] %s — %s", entry["timestamp"], entry["text"])
 
 
 def main() -> None:
-    # Basic logging so internal messages are visible
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s  %(levelname)-8s  %(name)s — %(message)s",
-        datefmt="%H:%M:%S",
-    )
-
     pipeline = Pipeline()
     pipeline.register_callback(on_transcript)
 
-    print("🎙  AI Meeting Assistant — Stage 1")
-    print("    Listening… (press Ctrl+C to stop)\n")
+    logger.info("AI Meeting Assistant — Stage 1")
+    logger.info("Listening… (press Ctrl+C to stop)")
 
     pipeline.start()
 
@@ -39,9 +42,9 @@ def main() -> None:
         while True:
             pass
     except KeyboardInterrupt:
-        print("\n⏹  Stopping…")
+        logger.info("Stopping…")
         pipeline.stop()
-        print("Session ended.")
+        logger.info("Session ended.")
         sys.exit(0)
 
 
