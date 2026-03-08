@@ -19,3 +19,8 @@ build/
 # OS noise
 .DS_Store
 Thumbs.db
+
+# LLM model weights — too large for version control
+models/*.gguf
+models/*.bin
+models/*.ggml

@@ -4,11 +4,20 @@ version = "0.1.0"
 description = "Offline AI meeting assistant — real-time transcription pipeline"
 requires-python = ">=3.10"
 dependencies = [
-    "faster-whisper",
-    "sounddevice",
-    "numpy",
-    "pydantic-settings",
-    "python-dotenv",
+    # Audio capture
+    "sounddevice>=0.4.6",
+    "numpy>=1.24.0",
+
+    # Speech-to-text
+    "faster-whisper>=1.0.0",
+
+    # Configuration
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+
+    # LLM inference (CPU wheel only — see README for CUDA install)
+    "llama-cpp-python>=0.2.0",
 ]
 
 [build-system]
