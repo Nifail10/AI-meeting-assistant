@@ -72,6 +72,17 @@ def cmd_show(meeting_id: str) -> None:
     print(record.questions or "(none)")
 
     print()
+    print("── TIMELINE ──────────────────────────")
+    if record.segments:
+        for i, seg in enumerate(record.segments, 1):
+            print(f"  Topic {i}: {seg.title}")
+            print(f"    {seg.start_timestamp} → {seg.end_timestamp}")
+            print(f"    {seg.entry_count} transcript entries")
+            print()
+    else:
+        print("(no segments)")
+
+    print()
     print(f"── TRANSCRIPT ({len(record.transcript)} lines) ──────────")
     for entry in record.transcript:
         print(f"[{entry.timestamp}] {entry.text}")

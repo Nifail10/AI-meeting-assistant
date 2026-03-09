@@ -26,6 +26,16 @@ class Keypoint(BaseModel):
     text: str       # full LLM classification result string
 
 
+class Segment(BaseModel):
+    """A topic-coherent segment of a meeting transcript."""
+
+    title: str                          # 3-5 word LLM-generated topic title
+    start_timestamp: str                # ISO 8601 UTC of first entry
+    end_timestamp: str                  # ISO 8601 UTC of last entry
+    entries: list[TranscriptEntry] = Field(default_factory=list)
+    entry_count: int = 0                # convenience field, set on creation
+
+
 class MeetingRecord(BaseModel):
     """Complete record of a single meeting session."""
     meeting_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -34,6 +44,7 @@ class MeetingRecord(BaseModel):
     duration_secs: float  # total session duration in seconds
     summary: str = ""     # LLM-generated summary, empty if none
     questions: str = ""   # LLM-generated questions, empty if none
+    segments: list[Segment] = Field(default_factory=list)
     keypoints: list[Keypoint] = Field(default_factory=list)
     transcript: list[TranscriptEntry] = Field(default_factory=list)
 

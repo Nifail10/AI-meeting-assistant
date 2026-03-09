@@ -1,5 +1,5 @@
 """
-main.py — Entry point for the AI Meeting Assistant (Stage 1 + 2 + 3)
+main.py — Entry point for the AI Meeting Assistant (Stage 1 + 2 + 3 + 3.5)
 
 Starts the real-time transcription pipeline and prints every recognised
 transcript to the terminal. Press Ctrl+C to stop.
@@ -31,8 +31,9 @@ from processors.keypoint_processor import KeypointProcessor
 from processors.summary_processor import SummaryProcessor
 from processors.question_processor import QuestionProcessor
 from datetime import datetime, timezone
-from storage.meeting_models import MeetingRecord, Keypoint, TranscriptEntry
+from storage.meeting_models import MeetingRecord, Keypoint, TranscriptEntry, Segment
 from storage.meeting_store import MeetingStore
+from processors.topic_segmenter import TopicSegmenter
 
 
 # Path to the Mistral GGUF model file
@@ -52,6 +53,7 @@ def main() -> None:
     keypoint = KeypointProcessor(engine)
     summary = SummaryProcessor(engine)
     questions = QuestionProcessor(engine)
+    segmenter = TopicSegmenter(engine)
 
     # ── Stage 1: pipeline setup ────────────────────────────────
     pipeline = Pipeline()
@@ -60,7 +62,7 @@ def main() -> None:
     # ── Stage 2: register real-time processor ──────────────────
     keypoint.register(pipeline)
 
-    logger.info("AI Meeting Assistant — Stage 1 + 2 + 3")
+    logger.info("AI Meeting Assistant — Stage 1 + 2 + 3 + 3.5")
     logger.info("Listening… (press Ctrl+C to stop)")
 
     session_start = datetime.now(timezone.utc)
@@ -74,40 +76,46 @@ def main() -> None:
         logger.info("Stopping…")
         pipeline.stop()
 
-        # ── Stage 2: run end-of-session processors ─────────────
-        transcript = pipeline.get_transcript()
-        summary_text = summary.on_session_end(transcript)
-        questions_text = questions.on_session_end(transcript)
+        try:
+            # ── Stage 2: run end-of-session processors ─────────────
+            transcript = pipeline.get_transcript()
+            summary_text = summary.on_session_end(transcript)
+            questions_text = questions.on_session_end(transcript)
+            segments = segmenter.segment(transcript)
+            engine.shutdown()
 
-        engine.shutdown()
+            # ── Stage 3: persist meeting record ─────────────────────────
+            session_end = datetime.now(timezone.utc)
+            duration = (session_end - session_start).total_seconds()
 
-        # ── Stage 3: persist meeting record ─────────────────────────
-        session_end = datetime.now(timezone.utc)
-        duration = (session_end - session_start).total_seconds()
+            record = MeetingRecord(
+                started_at=session_start.isoformat(),
+                ended_at=session_end.isoformat(),
+                duration_secs=round(duration, 2),
+                summary=summary_text,
+                questions=questions_text,
+                segments=segments,
+                keypoints=[
+                    Keypoint(
+                        timestamp=kp["timestamp"],
+                        category=kp["category"],
+                        text=kp["text"],
+                    )
+                    for kp in keypoint.get_keypoints()
+                ],
+                transcript=[
+                    TranscriptEntry(
+                        timestamp=entry["timestamp"],
+                        text=entry["text"],
+                    )
+                    for entry in transcript
+                ],
+            )
+            meeting_store.save_meeting(record)
 
-        record = MeetingRecord(
-            started_at=session_start.isoformat(),
-            ended_at=session_end.isoformat(),
-            duration_secs=round(duration, 2),
-            summary=summary_text,
-            questions=questions_text,
-            keypoints=[
-                Keypoint(
-                    timestamp=kp["timestamp"],
-                    category=kp["category"],
-                    text=kp["text"],
-                )
-                for kp in keypoint.get_keypoints()
-            ],
-            transcript=[
-                TranscriptEntry(
-                    timestamp=entry["timestamp"],
-                    text=entry["text"],
-                )
-                for entry in transcript
-            ],
-        )
-        meeting_store.save_meeting(record)
+        except KeyboardInterrupt:
+            logger.warning("Interrupted during saving — shutting down.")
+            engine.shutdown()
 
         logger.info("Session ended.")
         sys.exit(0)
