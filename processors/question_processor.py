@@ -32,11 +32,11 @@ class QuestionProcessor:
     def __init__(self, engine: LLMEngine) -> None:
         self._engine = engine
 
-    def on_session_end(self, transcript: list[dict]) -> None:
+    def on_session_end(self, transcript: list[dict]) -> str:
         """Generate and print clarifying questions. Blocks until complete."""
         if not transcript:
             logger.warning("[QUESTIONS] Transcript is empty — skipping.")
-            return
+            return ""
 
         transcript_text = "\n".join(
             f"[{e['timestamp']}] {e['text']}" for e in transcript
@@ -56,5 +56,7 @@ class QuestionProcessor:
             print("[QUESTIONS]")
             print(result)
             print("─" * 60 + "\n")
+            return result
         else:
             logger.warning("[QUESTIONS] Model returned an empty response.")
+            return ""

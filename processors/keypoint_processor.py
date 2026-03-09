@@ -37,6 +37,7 @@ class KeypointProcessor:
 
     def __init__(self, engine: LLMEngine) -> None:
         self._engine = engine
+        self._collected_keypoints: list[dict] = []
 
     def register(self, pipeline) -> None:
         """Attach to the pipeline. Call this before pipeline.start()."""
@@ -59,6 +60,21 @@ class KeypointProcessor:
         """Called by the LLM async worker when classification is ready."""
         if not result:
             return
-        category = result.split(":")[0].strip().upper()
-        if category != "NONE":
-            logger.info("[KEYPOINT] %s | %s", timestamp, result)
+        result_upper = result.upper()
+        first_word = result_upper.split(":")[0].strip()
+        if first_word == "NONE":
+            return
+        if ": NONE" in result_upper:
+            return
+        if result_upper.strip() == "NONE":
+            return
+        logger.info("[KEYPOINT] %s | %s", timestamp, result)
+        self._collected_keypoints.append({
+            "timestamp": timestamp,
+            "category": result.split(":")[0].strip().upper(),
+            "text": result,
+        })
+
+    def get_keypoints(self) -> list[dict]:
+        """Return all keypoints collected during the session."""
+        return list(self._collected_keypoints)

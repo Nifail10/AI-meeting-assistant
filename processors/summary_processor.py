@@ -30,11 +30,11 @@ class SummaryProcessor:
     def __init__(self, engine: LLMEngine) -> None:
         self._engine = engine
 
-    def on_session_end(self, transcript: list[dict]) -> None:
+    def on_session_end(self, transcript: list[dict]) -> str:
         """Generate and print a meeting summary. Blocks until complete."""
         if not transcript:
             logger.warning("[SUMMARY] Transcript is empty — skipping summary.")
-            return
+            return ""
 
         transcript_text = "\n".join(
             f"[{e['timestamp']}] {e['text']}" for e in transcript
@@ -54,5 +54,7 @@ class SummaryProcessor:
             print("[SUMMARY]")
             print(result)
             print("─" * 60 + "\n")
+            return result
         else:
             logger.warning("[SUMMARY] Model returned an empty response.")
+            return ""

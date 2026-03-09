@@ -71,7 +71,7 @@ class Transcriber:
             segments, _info = self._model.transcribe(
                 audio_np,
                 beam_size=5,
-                vad_filter=True,
+                vad_filter=False,
                 language="en",
             )
 

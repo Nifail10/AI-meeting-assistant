@@ -24,3 +24,6 @@ Thumbs.db
 models/*.gguf
 models/*.bin
 models/*.ggml
+
+# Meeting records — personal data, not for version control
+meetings/*.json
